@@ -1,9 +1,10 @@
 import Phaser from 'phaser'
+import { sfx } from '../audio/sfx'
 import { DESIGN_W } from '../config'
 import { LEVEL_COUNT } from '../core/levels'
 import { loadSave } from '../core/save'
 import { addCasinoBackdrop } from '../view/background'
-import { FONT, GHOST_PILL, addMarquee, addPillButton } from '../view/ui'
+import { FONT, GHOST_PILL, addMarquee, addMuteChip, addPillButton } from '../view/ui'
 
 const GRID_COLS = 5
 const CHIP = 108
@@ -19,6 +20,7 @@ export class LevelSelectScene extends Phaser.Scene {
     addCasinoBackdrop(this, 'menu')
     addMarquee(this, DESIGN_W / 2, 96)
     addPillButton(this, 64, 84, 84, 56, '‹', GHOST_PILL, () => this.scene.start('home'))
+    addMuteChip(this, 676, 40)
 
     const gridW = GRID_COLS * CHIP + (GRID_COLS - 1) * GAP
     const startX = (DESIGN_W - gridW) / 2
@@ -88,7 +90,10 @@ export class LevelSelectScene extends Phaser.Scene {
       const zone = this.add.rectangle(0, 0, CHIP, CHIP, 0xffffff, 0.001).setInteractive({ useHandCursor: true })
       zone.on('pointerdown', () => container.setScale(0.94))
       zone.on('pointerout', () => container.setScale(1))
-      zone.on('pointerup', () => this.scene.start('game', { level: n }))
+      zone.on('pointerup', () => {
+        sfx.uiTap()
+        this.scene.start('game', { level: n })
+      })
       container.add(zone)
       if (current) {
         this.tweens.add({
