@@ -1,0 +1,86 @@
+import Phaser from 'phaser'
+import { DESIGN_W } from '../config'
+import { LEVEL_COUNT } from '../core/levels'
+import { loadSave } from '../core/save'
+import { addCasinoBackdrop } from '../view/background'
+import { FONT, GHOST_PILL, GOLD_PILL, addMarquee, addPillButton } from '../view/ui'
+
+export class HomeScene extends Phaser.Scene {
+  constructor() {
+    super('home')
+  }
+
+  create(): void {
+    const save = loadSave()
+    const currentLevel = Math.min(save.unlocked, LEVEL_COUNT)
+
+    addCasinoBackdrop(this, 'home')
+
+    // Big heart emblem with a heartbeat pulse.
+    const heart = this.add.image(DESIGN_W / 2, 300, 'heart')
+    heart.setDisplaySize(190, 190)
+    const base = heart.scaleX
+    this.tweens.add({
+      targets: heart,
+      scale: base * 1.09,
+      duration: 620,
+      yoyo: true,
+      repeat: -1,
+      repeatDelay: 340,
+      ease: 'Sine.easeInOut',
+    })
+    // A couple of tiny satellites to make the emblem feel alive.
+    for (const [dx, dy, size, delay] of [
+      [-130, -60, 30, 0],
+      [138, -30, 24, 500],
+      [110, 84, 20, 900],
+    ]) {
+      const mini = this.add.image(DESIGN_W / 2 + dx, 300 + dy, 'heart').setAlpha(0.5)
+      mini.setDisplaySize(size, size)
+      this.tweens.add({
+        targets: mini,
+        y: 300 + dy - 14,
+        alpha: 0.25,
+        duration: 1600,
+        delay,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      })
+    }
+
+    addMarquee(this, DESIGN_W / 2, 500)
+    this.add
+      .text(DESIGN_W / 2, 560, 'made with ♥ for Maya', {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '26px',
+        fontStyle: 'italic',
+        color: '#d3304f',
+      })
+      .setOrigin(0.5)
+      .setAlpha(0.9)
+
+    const play = addPillButton(this, DESIGN_W / 2, 720, 340, 96, 'PLAY', GOLD_PILL, () =>
+      this.scene.start('game', { level: currentLevel })
+    )
+    this.tweens.add({
+      targets: play,
+      scale: 1.04,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    })
+    const sub =
+      save.best > 0
+        ? `Level ${currentLevel}  ·  best ${save.best.toLocaleString()}`
+        : `Level ${currentLevel}  ·  swipe to match 3`
+    this.add
+      .text(DESIGN_W / 2, 790, sub, { fontFamily: FONT, fontSize: '22px', color: '#9a927e' })
+      .setOrigin(0.5)
+
+    addPillButton(this, DESIGN_W / 2, 872, 280, 64, 'LEVELS', GHOST_PILL, () =>
+      this.scene.start('levelselect')
+    )
+  }
+}

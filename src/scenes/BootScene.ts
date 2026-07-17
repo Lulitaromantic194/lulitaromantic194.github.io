@@ -12,6 +12,6 @@ export class BootScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search)
     const level = import.meta.env.DEV && params.has('level') ? Number(params.get('level')) : null
     if (level && Number.isFinite(level)) this.scene.start('game', { level })
-    else this.scene.start('levelselect')
+    else this.scene.start('home')
   }
 }

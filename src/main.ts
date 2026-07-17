@@ -3,6 +3,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { DESIGN_H, DESIGN_W } from './config'
 import { BootScene } from './scenes/BootScene'
 import { GameScene } from './scenes/GameScene'
+import { HomeScene } from './scenes/HomeScene'
 import { LevelSelectScene } from './scenes/LevelSelectScene'
 
 registerSW({ immediate: true })
@@ -38,5 +39,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, LevelSelectScene, GameScene],
+  scene: [BootScene, HomeScene, LevelSelectScene, GameScene],
 })

@@ -2,7 +2,8 @@ import Phaser from 'phaser'
 import { DESIGN_W } from '../config'
 import { LEVEL_COUNT } from '../core/levels'
 import { loadSave } from '../core/save'
-import { FONT, addMarquee } from '../view/ui'
+import { addCasinoBackdrop } from '../view/background'
+import { FONT, GHOST_PILL, addMarquee, addPillButton } from '../view/ui'
 
 const GRID_COLS = 5
 const CHIP = 108
@@ -15,7 +16,9 @@ export class LevelSelectScene extends Phaser.Scene {
 
   create(): void {
     const save = loadSave()
+    addCasinoBackdrop(this, 'menu')
     addMarquee(this, DESIGN_W / 2, 96)
+    addPillButton(this, 64, 84, 84, 56, '‹', GHOST_PILL, () => this.scene.start('home'))
 
     const gridW = GRID_COLS * CHIP + (GRID_COLS - 1) * GAP
     const startX = (DESIGN_W - gridW) / 2

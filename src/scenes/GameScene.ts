@@ -22,6 +22,7 @@ import { mulberry32 } from '../core/rng'
 import { recordResult, recordScore } from '../core/save'
 import { SYMBOLS, key } from '../core/types'
 import type { ClearWave, Coord, FallMove, LevelSpec, Piece, Spawn, SymbolType } from '../core/types'
+import { addCasinoBackdrop } from '../view/background'
 import { TEX_SIZE, ensurePieceTexture } from '../view/textures'
 import { FONT, GHOST_PILL, GOLD_PILL, addPillButton } from '../view/ui'
 
@@ -135,6 +136,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    addCasinoBackdrop(this, 'game')
     this.buildBackdrop()
     this.buildHud()
     this.buildPieceLayer()
