@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png'],
+      includeAssets: ['apple-touch-icon.png', 'favicon.ico', 'favicon.svg', 'favicon-32.png', 'favicon-16.png'],
       manifest: {
         name: 'Viva Maya',
         short_name: 'Viva Maya',
@@ -28,7 +28,9 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest,woff2}'],
+        // Social-preview poster is for link unfurlers only — keep it out of the offline cache.
+        globIgnores: ['**/og-image.png'],
         // Phaser's bundle is ~1.5 MB raw; keep it under the precache ceiling.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: 'index.html'

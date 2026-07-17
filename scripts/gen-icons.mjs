@@ -127,14 +127,48 @@ function render(size, motif, ring) {
   return buf
 }
 
+/** ICO container with embedded PNG entries (fine for all modern browsers). */
+function encodeIco(entries) {
+  const header = Buffer.alloc(6)
+  header.writeUInt16LE(0, 0)
+  header.writeUInt16LE(1, 2)
+  header.writeUInt16LE(entries.length, 4)
+  const dirs = []
+  let offset = 6 + 16 * entries.length
+  for (const { size, buf } of entries) {
+    const dir = Buffer.alloc(16)
+    dir[0] = size >= 256 ? 0 : size
+    dir[1] = size >= 256 ? 0 : size
+    dir.writeUInt16LE(1, 4) // color planes
+    dir.writeUInt16LE(32, 6) // bpp
+    dir.writeUInt32LE(buf.length, 8)
+    dir.writeUInt32LE(offset, 12)
+    offset += buf.length
+    dirs.push(dir)
+  }
+  return Buffer.concat([header, ...dirs, ...entries.map(e => e.buf)])
+}
+
 mkdirSync(OUT, { recursive: true })
 const jobs = [
   ['pwa-512.png', 512, 0.62, true],
   ['pwa-192.png', 192, 0.62, true],
   ['pwa-maskable-512.png', 512, 0.46, false], // motif inside the maskable safe zone
   ['apple-touch-icon.png', 180, 0.58, false],
+  ['favicon-32.png', 32, 0.84, false], // tiny sizes: no ring, heart fills the frame
+  ['favicon-16.png', 16, 0.88, false],
 ]
 for (const [name, size, motif, ring] of jobs) {
   writeFileSync(join(OUT, name), encodePng(size, render(size, motif, ring)))
   console.log(`wrote public/${name}`)
 }
+const icoSizes = [
+  [16, 0.88],
+  [32, 0.84],
+  [48, 0.8],
+]
+writeFileSync(
+  join(OUT, 'favicon.ico'),
+  encodeIco(icoSizes.map(([size, motif]) => ({ size, buf: encodePng(size, render(size, motif, false)) })))
+)
+console.log('wrote public/favicon.ico')
