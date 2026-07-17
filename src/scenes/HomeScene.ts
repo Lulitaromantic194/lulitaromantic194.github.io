@@ -51,14 +51,13 @@ export class HomeScene extends Phaser.Scene {
 
     addMarquee(this, DESIGN_W / 2, 500)
     this.add
-      .text(DESIGN_W / 2, 560, 'made with ♥ for Maya', {
-        fontFamily: 'Georgia, "Times New Roman", serif',
-        fontSize: '26px',
-        fontStyle: 'italic',
-        color: '#d3304f',
+      .text(DESIGN_W / 2, 560, 'cascades  ·  power-ups  ·  jackpots', {
+        fontFamily: FONT,
+        fontSize: '24px',
+        color: '#9a927e',
       })
       .setOrigin(0.5)
-      .setAlpha(0.9)
+      .setLetterSpacing(2)
 
     const play = addPillButton(this, DESIGN_W / 2, 720, 340, 96, 'PLAY', GOLD_PILL, () =>
       this.scene.start('game', { level: currentLevel })

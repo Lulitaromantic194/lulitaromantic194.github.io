@@ -48,16 +48,6 @@ export class LevelSelectScene extends Phaser.Scene {
         color: '#9a927e',
       })
       .setOrigin(0.5)
-    const dedication = this.add
-      .text(DESIGN_W / 2, 1126, 'made with ♥ for Maya', {
-        fontFamily: 'Georgia, "Times New Roman", serif',
-        fontSize: '24px',
-        fontStyle: 'italic',
-        color: '#d3304f',
-      })
-      .setOrigin(0.5)
-      .setAlpha(0.85)
-    this.tweens.add({ targets: dedication, alpha: 1, duration: 900, yoyo: true, repeat: -1 })
   }
 
   private addChip(n: number, cx: number, cy: number, unlocked: number, stars: number): void {

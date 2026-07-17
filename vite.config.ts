@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'Viva Maya',
         short_name: 'Viva Maya',
-        description: 'A casino match-3 made for Maya — spin up cascades, chase the jackpot.',
+        description: 'A casino match-3 — spin up cascades, chase the jackpot.',
         start_url: './',
         scope: './',
         display: 'standalone',
