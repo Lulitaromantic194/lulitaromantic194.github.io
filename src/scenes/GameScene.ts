@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { sfx } from '../audio/sfx'
 import {
   BOARD_W,
   BOARD_X,
@@ -23,7 +24,7 @@ import { recordResult, recordScore } from '../core/save'
 import { SYMBOLS, key } from '../core/types'
 import type { ClearWave, Coord, FallMove, LevelSpec, Piece, Spawn, SymbolType } from '../core/types'
 import { TEX_SIZE, ensurePieceTexture } from '../view/textures'
-import { FONT, GHOST_PILL, GOLD_PILL, addPillButton } from '../view/ui'
+import { FONT, GHOST_PILL, GOLD_PILL, addMuteChip, addPillButton } from '../view/ui'
 
 /**
  * Turn state machine:
@@ -247,6 +248,8 @@ export class GameScene extends Phaser.Scene {
       .text(BOARD_X + BOARD_W, 84, '0', { fontFamily: FONT, fontSize: '34px', color: '#2a2732', fontStyle: 'bold' })
       .setOrigin(1, 0)
       .setShadow(0, 2, 'rgba(0,0,0,0.12)', 4, false, true)
+    // Mute chip nudged to y=34 (from 40) so its lower arc clears the SCORE label.
+    addMuteChip(this, 676, 34)
 
     // Second row: moves card + objective chips.
     const cardY = 196
@@ -446,6 +449,7 @@ export class GameScene extends Phaser.Scene {
     const pb = this.board.get(b)
     if (!pa || !pb) return
     this.state = 'swapping'
+    sfx.swapWhoosh()
 
     const sa = this.sprites.get(pa.id)!
     const sb = this.sprites.get(pb.id)!
@@ -463,6 +467,7 @@ export class GameScene extends Phaser.Scene {
       if (this.board.findRuns().length === 0) {
         // Invalid: thud and snap back. No move spent.
         this.board.swap(a, b)
+        sfx.invalidThud()
         this.cameras.main.shake(90, 0.005)
         await Promise.all([
           this.t({ targets: sa, x: posA.x, y: posA.y, duration: INVALID_MS, ease: 'Quad.easeIn' }),
@@ -519,10 +524,14 @@ export class GameScene extends Phaser.Scene {
     const transformedKeys = new Set(wave.transformed.map(t => key(t.at)))
     const pops = wave.cleared.filter(c => !transformedKeys.has(key(c.at)))
 
+    // Signature clear blip, once per wave — rises a semitone per cascade step.
+    sfx.pop(cascade)
+
     // Effect choreography.
     let effectMs = 0
     for (const e of wave.events) {
       if (e.type === 'reel') {
+        sfx.reelSweep()
         const at = this.cellToXY(e.at)
         const sweep = this.add.image(e.horizontal ? BOARD_X + BOARD_W / 2 : at.x, e.horizontal ? at.y : BOARD_Y + BOARD_W / 2, 'sweep')
         sweep.setDepth(25)
@@ -542,11 +551,14 @@ export class GameScene extends Phaser.Scene {
         })
         effectMs = Math.max(effectMs, 290)
       } else if (e.type === 'bomb') {
+        sfx.bombBoom()
+        this.vibrate(30)
         const at = this.cellToXY(e.at)
         this.cameras.main.shake(140 + e.radius * 60, 0.006 + e.radius * 0.004)
         this.sparkEmitter.explode(18 + e.radius * 14, at.x, at.y)
         effectMs = Math.max(effectMs, 220)
       } else {
+        sfx.jackpotStrike()
         this.cameras.main.flash(280, 255, 214, 90)
         this.cameras.main.shake(240, 0.008)
         effectMs = Math.max(effectMs, 320)
@@ -653,6 +665,7 @@ export class GameScene extends Phaser.Scene {
 
   private async reshuffle(): Promise<void> {
     this.state = 'shuffling'
+    sfx.reshuffleSwirl()
     const toast = this.add
       .text(DESIGN_W / 2, BOARD_Y + BOARD_W / 2, 'NO MOVES — RESHUFFLING', {
         fontFamily: FONT,
@@ -705,6 +718,8 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(DESIGN_W / 2, 640, DESIGN_W, 1280, 0x2a2417, 0.5).setDepth(40).setInteractive()
 
     if (win) {
+      sfx.winFanfare()
+      this.vibrate(80)
       // Maya's touch: a shower of hearts over the card.
       const hearts = this.add
         .particles(0, 0, 'heart', {
@@ -720,6 +735,8 @@ export class GameScene extends Phaser.Scene {
         .setDepth(45)
       hearts.explode(26, DESIGN_W / 2, 400)
       this.time.delayedCall(1600, () => hearts.destroy())
+    } else {
+      sfx.loseWah()
     }
 
     const cx = DESIGN_W / 2
@@ -750,13 +767,16 @@ export class GameScene extends Phaser.Scene {
           .setDepth(42)
           .setAlpha(i < stars ? 1 : 0.22)
           .setScale(0)
+        const delay = 150 + i * 160
         this.tweens.add({
           targets: star,
           scale: (i < stars ? 1 : 0.8) * (68 / 64),
-          delay: 150 + i * 160,
+          delay,
           duration: 260,
           ease: 'Back.easeOut',
         })
+        // Ascending bell ding synced to each earned star's pop-in.
+        if (i < stars) this.time.delayedCall(delay, () => sfx.starDing(i))
       }
     } else {
       const goals = this.objectives.map(o => `${o.remaining > 0 ? o.remaining : '✓'}`).join('   ')
@@ -826,6 +846,10 @@ export class GameScene extends Phaser.Scene {
 
   private showCombo(cascade: number): void {
     const big = cascade >= 4
+    if (big) {
+      sfx.jackpotStrike()
+      this.vibrate([60, 40, 120])
+    }
     const text = this.add
       .text(DESIGN_W / 2, BOARD_Y + BOARD_W / 2 - 40, big ? 'MEGA WIN!' : `COMBO x${cascade}`, {
         fontFamily: FONT,
@@ -862,5 +886,10 @@ export class GameScene extends Phaser.Scene {
     return new Promise(resolve => {
       this.tweens.add({ ...config, onComplete: () => resolve() } as unknown as Phaser.Types.Tweens.TweenBuilderConfig)
     })
+  }
+
+  /** Haptic buzz, guarded for browsers without the Vibration API. */
+  private vibrate(pattern: number | number[]): void {
+    if ('vibrate' in navigator) navigator.vibrate?.(pattern)
   }
 }

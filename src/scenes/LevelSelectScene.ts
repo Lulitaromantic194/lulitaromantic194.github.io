@@ -1,8 +1,9 @@
 import Phaser from 'phaser'
+import { sfx } from '../audio/sfx'
 import { DESIGN_W } from '../config'
 import { LEVEL_COUNT } from '../core/levels'
 import { loadSave } from '../core/save'
-import { FONT, addMarquee } from '../view/ui'
+import { FONT, addMarquee, addMuteChip } from '../view/ui'
 
 const GRID_COLS = 5
 const CHIP = 108
@@ -16,6 +17,7 @@ export class LevelSelectScene extends Phaser.Scene {
   create(): void {
     const save = loadSave()
     addMarquee(this, DESIGN_W / 2, 96)
+    addMuteChip(this, 676, 40)
 
     const gridW = GRID_COLS * CHIP + (GRID_COLS - 1) * GAP
     const startX = (DESIGN_W - gridW) / 2
@@ -95,7 +97,10 @@ export class LevelSelectScene extends Phaser.Scene {
       const zone = this.add.rectangle(0, 0, CHIP, CHIP, 0xffffff, 0.001).setInteractive({ useHandCursor: true })
       zone.on('pointerdown', () => container.setScale(0.94))
       zone.on('pointerout', () => container.setScale(1))
-      zone.on('pointerup', () => this.scene.start('game', { level: n }))
+      zone.on('pointerup', () => {
+        sfx.uiTap()
+        this.scene.start('game', { level: n })
+      })
       container.add(zone)
       if (current) {
         this.tweens.add({

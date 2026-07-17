@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { sfx } from '../audio/sfx'
 
 export const FONT = '"Arial Black", "Helvetica Neue", Arial, sans-serif'
 
@@ -72,8 +73,39 @@ export function addPillButton(
   zone.on('pointerout', () => container.setScale(1))
   zone.on('pointerup', () => {
     container.setScale(1)
+    sfx.uiTap()
     onTap()
   })
   container.add([g, text, zone])
+  return container
+}
+
+/**
+ * Round mute-toggle chip (🔊 / 🔇) styled like GHOST_PILL. Toggles + persists the
+ * sfx mute flag; plays a tap only when re-enabling sound. Returns the container.
+ */
+export function addMuteChip(scene: Phaser.Scene, x: number, y: number, size = 52): Phaser.GameObjects.Container {
+  const r = size / 2
+  const container = scene.add.container(x, y).setDepth(50)
+  const g = scene.add.graphics()
+  g.fillStyle(0x8a7a52, 0.18)
+  g.fillCircle(2, 3, r)
+  g.fillStyle(GHOST_PILL.fill, 1)
+  g.fillCircle(0, 0, r)
+  g.lineStyle(2, GHOST_PILL.border ?? 0xe8dfc9, 1)
+  g.strokeCircle(0, 0, r)
+  const icon = scene.add
+    .text(0, 1, sfx.muted ? '🔇' : '🔊', { fontFamily: 'sans-serif', fontSize: `${Math.round(size * 0.5)}px` })
+    .setOrigin(0.5)
+  const zone = scene.add.rectangle(0, 0, size, size, 0xffffff, 0.001).setInteractive({ useHandCursor: true })
+  zone.on('pointerdown', () => container.setScale(0.9))
+  zone.on('pointerout', () => container.setScale(1))
+  zone.on('pointerup', () => {
+    container.setScale(1)
+    const muted = sfx.toggleMuted()
+    icon.setText(muted ? '🔇' : '🔊')
+    if (!muted) sfx.uiTap()
+  })
+  container.add([g, icon, zone])
   return container
 }
